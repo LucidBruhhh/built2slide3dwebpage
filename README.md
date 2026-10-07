@@ -52,4 +52,7 @@ The untouched upload is saved at `source-assets/bruh-original.glb` (25,742,824 b
 The active model is now `public/assets/models/bruh-v2.glb` from `source-assets/candidate-a.glb`. See [MODEL-COMPARISON.md](MODEL-COMPARISON.md) for the independent audit, source hashes, optimisation measurements and remaining limitations. `node scripts/prepare-bruh.mjs` defaults to this replacement; the old preparation statistics above describe the first upload. Model orientation/contact calibration and shared tyre-effect anchors live in `src/scene/vehicleConfig.js`.
 
 ## Review checkpoint
-See [review/AUDIT.md](review/AUDIT.md) for test coverage, outstanding fidelity issues, and the background proposal. This checkpoint is a working review version, not a certified 1:1 replica. The cedar background is disabled by default.
+See [review/AUDIT.md](review/AUDIT.md) for test coverage, outstanding fidelity issues, and the background proposal. This checkpoint is a working review version, not a certified 1:1 replica. The cedar background was disabled at that historical checkpoint; see the approved environment update below.
+
+## Approved cedar environment
+The cedar mountain-road setting is now active on /drift-line. See [review/ENVIRONMENT.md](review/ENVIRONMENT.md) for implementation details and validation. Use /drift-line?environment=asphalt to compare the earlier setting. The historical review checkpoint and its concept image remain preserved.

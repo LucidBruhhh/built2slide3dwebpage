@@ -15,4 +15,3 @@ return <group>
 {Array.from({length:10},(_,i)=><mesh key={i} position={[Math.sin(i*1.8)*56,-2,Math.cos(i*1.8)*56]}><coneGeometry args={[17,18+(i%3)*9,7]}/><meshStandardMaterial color="#536d70" roughness={1}/></mesh>)}
 </group>;
 }
-

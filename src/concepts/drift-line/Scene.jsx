@@ -1,4 +1,4 @@
-import CedarPreview from "./CedarPreview.jsx";
+import CedarEnvironment from "./CedarEnvironment.jsx";
 import React, { useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
@@ -161,7 +161,7 @@ function Smoke({ current, low, paused, strength }) {
   );
 }
 function World({ progress, pointer, low, paused, reduced, onReady }) {
-  const preview = new URLSearchParams(location.search).get("environment") === "cedar-preview";
+  const cedar = new URLSearchParams(location.search).get("environment") !== "asphalt";
   const car = useRef(),
     current = useRef(0),
     strength = useRef(0),
@@ -215,8 +215,8 @@ function World({ progress, pointer, low, paused, reduced, onReady }) {
   });
   return (
     <>
-      <color attach="background" args={[preview ? "#71888d" : "#181b19"]} />
-      <fog attach="fog" args={[preview ? "#71888d" : "#181b19", preview ? 25 : 17, preview ? 85 : 48]} />
+      <color attach="background" args={[cedar ? "#75898c" : "#181b19"]} />
+      <fog attach="fog" args={[cedar ? "#75898c" : "#181b19", cedar ? 30 : 17, cedar ? 110 : 48]} />
       <hemisphereLight args={["#b9c3c8", "#302c21", 1.6]} />
       <directionalLight
         position={[5, 12, 4]}
@@ -232,11 +232,11 @@ function World({ progress, pointer, low, paused, reduced, onReady }) {
         shadow-bias={-0.001}
       />
       <directionalLight position={[-7, 4, -6]} intensity={2} color="#9babb4" />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      {!cedar && <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[180, 180]} />
         <meshStandardMaterial map={tex} roughness={0.96} metalness={0.04} />
-      </mesh>
-      {preview ? <CedarPreview /> : <Guide />}
+      </mesh>}
+      {cedar ? <CedarEnvironment asphalt={tex} low={low} /> : <Guide />}
       <Tracks current={current} />
       <group ref={car}>
         <Car onReady={onReady} motion={motion} />
@@ -256,7 +256,7 @@ function World({ progress, pointer, low, paused, reduced, onReady }) {
         paused={paused || reduced}
         strength={strength}
       />
-      {!preview && [-12, -6, 0, 6, 12].map((x) => (
+      {!cedar && [-12, -6, 0, 6, 12].map((x) => (
         <mesh
           key={x}
           position={[x, 0.015, -10]}
@@ -280,7 +280,7 @@ export default function Scene(props) {
       frameloop={!props.active ? "never" : props.reduced ? "demand" : "always"}
       shadows={!low}
       dpr={low ? 1 : [1, 1.5]}
-      camera={{ position: [8, 7, 12], fov: 43, near: 0.1, far: 90 }}
+      camera={{ position: [8, 7, 12], fov: 43, near: 0.1, far: 220 }}
       gl={{ antialias: !low, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;

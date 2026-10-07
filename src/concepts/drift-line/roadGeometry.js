@@ -1,0 +1,3 @@
+import * as T from 'three';
+export function roadPoint(t,offset=0,y=.002){const a=-1.15+t*3.6,dx=7*Math.cos(a),dz=-4.4*Math.sin(a),l=Math.hypot(dx,dz);return new T.Vector3(Math.sin(a)*7+dz/l*offset,y,Math.cos(a)*4.4-2.3-dx/l*offset);}
+export function roadRibbon(offset,width){const v=[],uv=[],ix=[];for(let i=0;i<=220;i++){for(const s of [-1,1]){v.push(...roadPoint(-.36+i/220*1.72,offset+s*width).toArray());uv.push(i/220*.5,(s+1)*.05);}if(i<220){const n=i*2;ix.push(n,n+2,n+1,n+1,n+2,n+3);}}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(ix);g.computeVertexNormals();return g;}

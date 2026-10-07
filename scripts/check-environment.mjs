@@ -1,0 +1,3 @@
+import {chromium} from '@playwright/test';
+const b=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader']});
+for(const [name,width,height] of [['desktop',1440,960],['mobile',390,844]]){const p=await b.newPage({viewport:{width,height}});await p.goto('http://127.0.0.1:5186/drift-line');await p.locator('canvas').waitFor();await p.locator('.model-loading').waitFor({state:'detached'});await p.waitForTimeout(2000);for(const [phase,t] of [['entry',0],['middle',.5],['exit',.99]]){await p.evaluate(t=>scrollTo(0,innerHeight*2.5*t),t);await p.waitForTimeout(1600);await p.screenshot({path:'.preview/cedar-'+name+'-'+phase+'.png'});}await p.close();}await b.close();
