@@ -15,3 +15,5 @@ The non-Drift Line card images establish visual reference only; those scenes hav
 BRUH reference photograph: `photographs/bruh-drift.jpg` is an unchanged copy of `ChatGPT Image Oct 7, 2026, 08_15_15 AM.jpg`. The earlier procedural model (preserved in Git history) was created from the user-supplied front, side and rear BRUH photographs (including 505350178…, 505582969…, 505578633… and 506016265…). It has now been replaced by the uploaded mesh below.
 
 Active 3D asset: `models/bruh.glb`, an optimised derivative of the user-uploaded `white sports car 3d model.glb` (generator metadata: Tripo). Original preserved in `source-assets/bruh-original.glb` outside public assets. Embedded texture unchanged. This replaces the earlier procedural recreation in the scene and viewer.
+
+Current active asset: `models/bruh-v2.glb` from the first/third identical `white modified car 3d model.glb` uploads. Original A and alternative B are retained under `source-assets/`. See `MODEL-COMPARISON.md` for provenance and comparison. The previous `bruh.glb` is retained but no longer loaded by the scene.

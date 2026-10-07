@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import Car from "../../scene/Car.jsx";
+import { vehicleConfig as vehicle } from "../../scene/vehicleConfig.js";
 import { trajectory, heading, clamp } from "../../animation/trajectory.js";
 import { smokeVertex, smokeFragment } from "../../shaders/smoke.js";
 const shadowFragment = `varying vec2 vUv;void main(){float a=smoothstep(.52,.12,length(vUv-.5))*.6;gl_FragColor=vec4(.01,.015,.012,a);}`;
@@ -35,9 +36,9 @@ function makeLine(offset = 0, width = 0.08) {
     const p = trajectory(t),
       yaw = heading(t) + 0.68;
     const rear = [
-      p[0] - Math.sin(yaw) * 1.39 + Math.cos(yaw) * offset,
+      p[0] - Math.sin(yaw) * vehicle.rearAxleDistance + Math.cos(yaw) * offset,
       0.025,
-      p[2] - Math.cos(yaw) * 1.39 - Math.sin(yaw) * offset,
+      p[2] - Math.cos(yaw) * vehicle.rearAxleDistance - Math.sin(yaw) * offset,
     ];
     for (const side of [-1, 1]) {
       vertices.push(
@@ -61,7 +62,7 @@ function makeLine(offset = 0, width = 0.08) {
 }
 function Tracks({ current }) {
   const geometries = useMemo(
-    () => [-0.97, 0.97].map((o) => makeLine(o, 0.13)),
+    () => [-vehicle.halfTrack, vehicle.halfTrack].map((o) => makeLine(o, 0.13)),
     [],
   );
   const refs = useRef([]);
@@ -120,11 +121,14 @@ function Smoke({ current, low, paused }) {
         side = i % 2 ? 1 : -1;
       mesh.position.set(
         p[0] -
-          Math.sin(yaw) * 1.55 +
-          Math.cos(yaw) * side * 0.94 +
+          Math.sin(yaw) * vehicle.rearAxleDistance +
+          Math.cos(yaw) * side * vehicle.halfTrack +
           Math.sin(i * 7.2) * age * 0.8,
         0.3 + age * 1.4,
-        p[2] - Math.cos(yaw) * 1.55 - Math.sin(yaw) * side * 0.94 + age * 0.4,
+        p[2] -
+          Math.cos(yaw) * vehicle.rearAxleDistance -
+          Math.sin(yaw) * side * vehicle.halfTrack +
+          age * 0.4,
       );
       mesh.quaternion.copy(state.camera.quaternion);
       mesh.rotateZ(i * 1.1 + age * 0.45);

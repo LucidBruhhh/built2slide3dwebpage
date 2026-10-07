@@ -46,3 +46,7 @@ Use **View BRUH** in the scene controls to open the car viewer. Drag to orbit, s
 ## Uploaded model preparation
 
 The untouched upload is saved at `source-assets/bruh-original.glb` (25,742,824 bytes, 848,140 triangles). Run `node scripts/prepare-bruh.mjs` to generate `public/assets/models/bruh.glb` (5,229,060 bytes, 127,219 triangles). This uses meshoptimizer simplification with a 0.0005 error limit; the embedded JPEG is copied unchanged. Only the smaller GLB is served to browsers. The original procedural model remains recoverable in Git history.
+
+## Replacement model selected after comparison
+
+The active model is now `public/assets/models/bruh-v2.glb` from `source-assets/candidate-a.glb`. See [MODEL-COMPARISON.md](MODEL-COMPARISON.md) for the independent audit, source hashes, optimisation measurements and remaining limitations. `node scripts/prepare-bruh.mjs` defaults to this replacement; the old preparation statistics above describe the first upload. Model orientation/contact calibration and shared tyre-effect anchors live in `src/scene/vehicleConfig.js`.
