@@ -96,7 +96,7 @@ export default function CarInspection({ onClose }) {
         <p>
           Drag to orbit · Scroll to zoom
           <br />
-          <small>Modelled from your photographs.</small>
+          <small>Your uploaded BRUH model.</small>
         </p>
       </div>
     </dialog>

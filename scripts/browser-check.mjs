@@ -65,7 +65,7 @@ try {
       /FOLLOW THE LINE/,
     );
     await page.getByRole("button", { name: "REPLAY THE LINE" }).click();
-    await page.waitForTimeout(1400);
+    await page.waitForFunction(() => scrollY < 10, {}, { timeout: 10000 });
     assert.ok((await page.evaluate(() => scrollY)) < 10);
     assert.ok(
       await page.evaluate(

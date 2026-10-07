@@ -29,7 +29,7 @@ Scroll or swipe vertically to progress the drift. Pointer movement subtly change
 
 `src/concepts/drift-line/` owns the experiment. `src/scene/` contains shared header, photo-reference R33 model and orbit viewer. `src/animation/trajectory.js` defines the curve shared by the car and tyre marks. `src/shaders/` contains the bounded smoke shader. New concepts should have independent directories and lazy route imports.
 
-`public/assets/` has separate folders for brand, photographs, models, textures, stickers, merchandise and events. See its asset manifest. The car is a stylised, code-built reconstruction of the supplied white BRUH R33 Skyline GTS-T. It is not a scan or a dimensionally exact replica. It includes front/rear NSW plates, wide riveted arches, five-spoke polished-lip wheels, intercooler bumper, windshield banner and rear wing. Fine decals and some body contours remain approximations. Static geometry is batched by material. Asphalt and smoke are procedural. No external car model or invented brand history is used. A genuine GLB model can later replace `Car.jsx`; orient its nose along +Z, with ground at Y=0 and length approximately 4.5 units.
+`public/assets/` has separate folders for brand, photographs, models, textures, stickers, merchandise and events. See its asset manifest. The active car is the user-supplied BRUH GLB, loaded with GLTFLoader and normalised to 4.55 units long with its nose along +Z. The loader corrects the slight nose-up pitch and centres the wheelbase. Its embedded texture, plates and decals are preserved. The source has a single combined mesh, so the wheels cannot currently steer or spin independently. Asphalt and smoke are procedural.
 
 The original attached photos remain unmodified. Five selected photos and the logo are copied locally for this first pass. The remaining attachments are reference material, not automatically loaded into the experience. Barlow and Barlow Condensed are bundled locally using Fontsource, with no external font requests.
 
@@ -42,3 +42,7 @@ The initial stable commit is tagged `lab-v0.1-drift-line`. To inspect or restore
 This is a visual prototype. No checkout, backend, analytics, racing controls or production integration is included.
 
 Use **View BRUH** in the scene controls to open the car viewer. Drag to orbit, scroll/pinch to zoom, or select Front / Side / Rear. Close or Escape returns to the drift scene. Run `node scripts/check-bruh.mjs` to verify the desktop/mobile viewer and save its three-angle screenshots.
+
+## Uploaded model preparation
+
+The untouched upload is saved at `source-assets/bruh-original.glb` (25,742,824 bytes, 848,140 triangles). Run `node scripts/prepare-bruh.mjs` to generate `public/assets/models/bruh.glb` (5,229,060 bytes, 127,219 triangles). This uses meshoptimizer simplification with a 0.0005 error limit; the embedded JPEG is copied unchanged. Only the smaller GLB is served to browsers. The original procedural model remains recoverable in Git history.
