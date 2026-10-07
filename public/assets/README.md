@@ -11,3 +11,5 @@ All photographic assets and the logo were supplied by the user. Originals are un
 | photographs/merch.jpg  | ChatGPT Image Oct 7, 2026, 08_21_36 AM.jpg        |
 
 The non-Drift Line card images establish visual reference only; those scenes have not been built. Add future genuine assets to the corresponding folders. No dates, people, events or car ownership are inferred from the photos.
+
+BRUH reference photograph: `photographs/bruh-drift.jpg` is an unchanged copy of `ChatGPT Image Oct 7, 2026, 08_15_15 AM.jpg`. The procedural model in `src/scene/Car.jsx` was created from the user-supplied front, side and rear BRUH photographs (including 505350178…, 505582969…, 505578633… and 506016265…). No external mesh is included.

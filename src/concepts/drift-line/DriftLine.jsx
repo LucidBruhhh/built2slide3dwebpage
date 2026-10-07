@@ -9,6 +9,7 @@ import React, {
 import Header from "../../scene/Header.jsx";
 import { clamp } from "../../animation/trajectory.js";
 const Scene = lazy(() => import("./Scene.jsx"));
+const CarInspection = lazy(() => import("../../scene/CarInspection.jsx"));
 class SceneBoundary extends Component {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -29,6 +30,7 @@ class SceneBoundary extends Component {
   }
 }
 export default function DriftLine() {
+  const [inspecting, setInspecting] = useState(false);
   const progress = useRef(0),
     pointer = useRef({ x: 0, y: 0 });
   const [pct, setPct] = useState(0),
@@ -98,7 +100,7 @@ export default function DriftLine() {
           </div>
           <div className="scene-label">
             <span className="dot" /> LIVE 3D STUDY{" "}
-            <span className="placeholder">TEMPORARY COUPE MODEL</span>
+            <span className="placeholder">BRUH / R33 SKYLINE GTS-T</span>
           </div>
           <div className="cinema-bottom">
             <div className="sequence">
@@ -112,6 +114,7 @@ export default function DriftLine() {
               SCROLL TO TRACE THE LINE <span>↓</span>
             </div>
             <div className="scene-controls">
+              <button onClick={() => setInspecting(true)}>VIEW BRUH</button>
               <button
                 onClick={() => setPaused((v) => !v)}
                 aria-pressed={paused}
@@ -144,8 +147,8 @@ export default function DriftLine() {
         </h2>
         <div className="photo-story">
           <img
-            src="/assets/photographs/drift.jpg"
-            alt="Supplied photograph of a drift car trailing tyre smoke on asphalt"
+            src="/assets/photographs/bruh-drift.jpg"
+            alt="BRUH, the white R33 Skyline GTS-T, drifting with tyre smoke"
             loading="lazy"
           />
           <div>
@@ -156,8 +159,9 @@ export default function DriftLine() {
               And the space between.
             </h3>
             <p>
-              A study in movement, inspired by the real thing. Scroll back to
-              replay the drift, or return to the lab to compare the concepts.
+              BRUH. The white R33 Skyline GTS-T from your archive, recreated in
+              3D with its wide arches, deep-dish wheels and signature plates.
+              Scroll back to replay the drift.
             </p>
             <button
               className="button"
@@ -178,6 +182,11 @@ export default function DriftLine() {
           <span>EXPERIMENTAL / FIRST PASS</span>
         </footer>
       </section>
+      {inspecting && (
+        <Suspense fallback={<div className="loading">LOADING BRUH…</div>}>
+          <CarInspection onClose={() => setInspecting(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -626,3 +626,115 @@ footer {
     transition: none !important;
   }
 }
+.car-inspection {
+  position: fixed;
+  inset: 0;
+  width: min(1200px, 96vw);
+  height: min(850px, 94dvh);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid #616865;
+  background: #272c2e;
+  color: #f1efe7;
+  overflow: hidden;
+}
+.car-inspection::backdrop {
+  background: #000c;
+  backdrop-filter: blur(8px);
+}
+.inspection-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px;
+  background: linear-gradient(#171c20bb, transparent);
+}
+.inspection-title h2 {
+  font:
+    700 40px "Barlow Condensed",
+    sans-serif;
+  margin: 0;
+}
+.inspection-title h2 span {
+  font-size: 18px;
+  font-weight: 400;
+  margin-left: 12px;
+  color: #bfc6c6;
+}
+.inspection-title .eyebrow {
+  margin: 0 0 7px;
+}
+.car-inspection button {
+  background: #202728;
+  border: 1px solid #717a75;
+  color: #f1efe7;
+  padding: 10px 15px;
+  cursor: pointer;
+  font:
+    600 12px "Barlow",
+    sans-serif;
+  letter-spacing: 0.06em;
+}
+.car-inspection button[aria-pressed="true"] {
+  background: #d7ef92;
+  color: #202520;
+  border-color: #d7ef92;
+}
+.inspection-canvas {
+  height: 100%;
+  width: 100%;
+  touch-action: none;
+}
+.inspection-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 25px 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  background: linear-gradient(transparent, #171c20bb);
+}
+.inspection-bottom button {
+  pointer-events: auto;
+  margin-right: 7px;
+}
+.inspection-bottom p {
+  font-size: 13px;
+  color: #d1d6d3;
+  text-align: right;
+}
+.inspection-bottom small {
+  color: #9da9a4;
+}
+@media (max-width: 600px) {
+  .inspection-title {
+    padding: 18px;
+  }
+  .inspection-title h2 span {
+    display: block;
+    margin: 3px 0;
+    font-size: 14px;
+  }
+  .inspection-bottom {
+    padding: 16px;
+    display: block;
+  }
+  .inspection-bottom p {
+    text-align: left;
+  }
+  .scene-controls {
+    flex-wrap: wrap;
+  }
+  .car-inspection {
+    height: 90dvh;
+  }
+}
