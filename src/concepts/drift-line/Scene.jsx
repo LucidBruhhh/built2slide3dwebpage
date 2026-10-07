@@ -1,0 +1,276 @@
+import React, { useMemo, useRef, useState, Suspense } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import Car from "../../scene/Car.jsx";
+import { trajectory, heading, clamp } from "../../animation/trajectory.js";
+import { smokeVertex, smokeFragment } from "../../shaders/smoke.js";
+const shadowFragment = `varying vec2 vUv;void main(){float a=smoothstep(.52,.12,length(vUv-.5))*.6;gl_FragColor=vec4(.01,.015,.012,a);}`;
+function asphaltTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const im = ctx.createImageData(256, 256);
+  let seed = 37;
+  for (let i = 0; i < im.data.length; i += 4) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const v = 45 + (seed % 35);
+    im.data[i] = v;
+    im.data[i + 1] = v;
+    im.data[i + 2] = v - 2;
+    im.data[i + 3] = 255;
+  }
+  ctx.putImageData(im, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(32, 32);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+function makeLine(offset = 0, width = 0.08) {
+  const vertices = [],
+    uv = [],
+    indices = [];
+  for (let i = 0; i <= 180; i++) {
+    const t = i / 180;
+    const p = trajectory(t),
+      yaw = heading(t) + 0.68;
+    const rear = [
+      p[0] - Math.sin(yaw) * 1.39 + Math.cos(yaw) * offset,
+      0.025,
+      p[2] - Math.cos(yaw) * 1.39 - Math.sin(yaw) * offset,
+    ];
+    for (const side of [-1, 1]) {
+      vertices.push(
+        rear[0] + Math.cos(yaw) * width * side,
+        rear[1],
+        rear[2] - Math.sin(yaw) * width * side,
+      );
+      uv.push(t, (side + 1) / 2);
+    }
+    if (i < 180) {
+      const n = i * 2;
+      indices.push(n, n + 2, n + 1, n + 1, n + 2, n + 3);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(indices);
+  g.computeVertexNormals();
+  return g;
+}
+function Tracks({ current }) {
+  const geometries = useMemo(
+    () => [-0.97, 0.97].map((o) => makeLine(o, 0.13)),
+    [],
+  );
+  const refs = useRef([]);
+  useFrame(() => {
+    refs.current.forEach((mesh) =>
+      mesh.geometry.setDrawRange(0, Math.floor(current.current * 180) * 6),
+    );
+  });
+  return (
+    <>
+      {geometries.map((geo, i) => (
+        <mesh ref={(r) => (refs.current[i] = r)} key={i} geometry={geo}>
+          <meshBasicMaterial
+            color="#070908"
+            transparent
+            opacity={0.8}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </>
+  );
+}
+function Guide() {
+  const geo = useMemo(() => makeLine(0, 0.025), []);
+  return (
+    <mesh geometry={geo}>
+      <meshBasicMaterial
+        color="#c0bda9"
+        transparent
+        opacity={0.31}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  );
+}
+function Smoke({ current, low, paused }) {
+  const group = useRef(),
+    time = useRef(0);
+  const count = low ? 26 : 58;
+  const uniforms = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        opacity: { value: 0 },
+        seed: { value: i * 2.74 },
+      })),
+    [count],
+  );
+  useFrame((state, dt) => {
+    if (!paused) time.current += Math.min(dt, 0.05);
+    group.current.children.forEach((mesh, i) => {
+      const age = (i / count + time.current * 0.12) % 1;
+      const t = Math.max(0, current.current - age * 0.14);
+      const p = trajectory(t),
+        yaw = heading(t) + 0.68,
+        side = i % 2 ? 1 : -1;
+      mesh.position.set(
+        p[0] -
+          Math.sin(yaw) * 1.55 +
+          Math.cos(yaw) * side * 0.94 +
+          Math.sin(i * 7.2) * age * 0.8,
+        0.3 + age * 1.4,
+        p[2] - Math.cos(yaw) * 1.55 - Math.sin(yaw) * side * 0.94 + age * 0.4,
+      );
+      mesh.quaternion.copy(state.camera.quaternion);
+      mesh.rotateZ(i * 1.1 + age * 0.45);
+      mesh.scale.setScalar(0.6 + age * 3.1);
+      mesh.material.uniforms.opacity.value =
+        Math.pow(Math.sin(age * Math.PI), 0.65) * 0.28;
+    });
+  });
+  return (
+    <group ref={group}>
+      {uniforms.map((u, i) => (
+        <mesh key={i}>
+          <planeGeometry args={[1, 1]} />
+          <shaderMaterial
+            vertexShader={smokeVertex}
+            fragmentShader={smokeFragment}
+            uniforms={u}
+            transparent
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+function World({ progress, pointer, low, paused }) {
+  const car = useRef(),
+    current = useRef(0);
+  const tex = useMemo(asphaltTexture, []);
+  const target = useMemo(() => new THREE.Vector3(), []);
+  const desired = useMemo(() => new THREE.Vector3(), []);
+  useFrame((state, dt) => {
+    current.current = THREE.MathUtils.damp(
+      current.current,
+      progress.current,
+      5,
+      Math.min(dt, 0.05),
+    );
+    const t = current.current,
+      p = trajectory(t),
+      wide = state.size.width > 700;
+    car.current.position.set(...p);
+    car.current.rotation.y =
+      heading(t) + 0.68 + (paused ? 0 : pointer.current.x * 0.055);
+    const px = paused ? 0 : pointer.current.x,
+      py = paused ? 0 : pointer.current.y;
+    desired.set(
+      p[0] + (wide ? 8 : 10) + px * 0.5,
+      wide ? 6.5 : 8.5,
+      p[2] + (wide ? 10 : 12) + py * 0.3,
+    );
+    state.camera.position.lerp(desired, 1 - Math.exp(-dt * 3));
+    target.set(p[0] - (wide ? 2.8 : 0), wide ? 0.2 : 2.2, p[2]);
+    state.camera.lookAt(target);
+  });
+  return (
+    <>
+      <color attach="background" args={["#181b19"]} />
+      <fog attach="fog" args={["#181b19", 17, 48]} />
+      <hemisphereLight args={["#b9c3c8", "#302c21", 1.6]} />
+      <directionalLight
+        position={[5, 12, 4]}
+        intensity={3}
+        color="#e8e2cc"
+        castShadow={!low}
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-left={-16}
+        shadow-camera-right={16}
+        shadow-camera-top={16}
+        shadow-camera-bottom={-16}
+        shadow-bias={-0.001}
+      />
+      <directionalLight position={[-7, 4, -6]} intensity={2} color="#9babb4" />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[180, 180]} />
+        <meshStandardMaterial map={tex} roughness={0.96} metalness={0.04} />
+      </mesh>
+      <Guide />
+      <Tracks current={current} />
+      <group ref={car}>
+        <Car />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
+          <planeGeometry args={[2.6, 5.2]} />
+          <shaderMaterial
+            vertexShader={smokeVertex}
+            fragmentShader={shadowFragment}
+            transparent
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+      <Smoke current={current} low={low} paused={paused} />
+      {[-12, -6, 0, 6, 12].map((x) => (
+        <mesh
+          key={x}
+          position={[x, 0.015, -10]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
+          <planeGeometry args={[3, 0.07]} />
+          <meshBasicMaterial color="#7f7f6c" transparent opacity={0.3} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+export default function Scene(props) {
+  const [slow, setSlow] = useState(false);
+  const low =
+    props.quality === "low" ||
+    (props.quality === "auto" &&
+      (innerWidth < 700 || navigator.hardwareConcurrency <= 4 || slow));
+  return (
+    <Canvas
+      shadows={!low}
+      dpr={low ? 1 : [1, 1.5]}
+      camera={{ position: [8, 7, 12], fov: 43, near: 0.1, far: 90 }}
+      gl={{ antialias: !low, powerPreference: "high-performance" }}
+      onCreated={({ gl }) => {
+        gl.toneMapping = THREE.ACESFilmicToneMapping;
+        gl.toneMappingExposure = 1.15;
+      }}
+      fallback={
+        <div className="scene-fallback">
+          3D unavailable. Scroll to the photographic study.
+        </div>
+      }
+    >
+      <Suspense fallback={null}>
+        <World {...props} low={low} />
+        <Performance onSlow={() => setSlow(true)} />
+      </Suspense>
+    </Canvas>
+  );
+}
+function Performance({ onSlow }) {
+  const sample = useRef({ time: 0, frames: 0, done: false });
+  useFrame((_, dt) => {
+    const s = sample.current;
+    if (s.done) return;
+    s.time += dt;
+    s.frames++;
+    if (s.time > 5) {
+      if (s.frames / s.time < 28) onSlow();
+      s.done = true;
+    }
+  });
+  return null;
+}

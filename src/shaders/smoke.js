@@ -1,0 +1,2 @@
+export const smokeVertex = `varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
+export const smokeFragment = `varying vec2 vUv;uniform float opacity;uniform float seed;void main(){vec2 p=vUv-.5;float r=length(p);float noise=sin(p.x*22.+seed)*sin(p.y*19.-seed)*.08+sin(p.x*41.+p.y*28.)*.025;float a=smoothstep(.5,.04,r+noise)*opacity;gl_FragColor=vec4(vec3(.65,.67,.65),a);}`;
