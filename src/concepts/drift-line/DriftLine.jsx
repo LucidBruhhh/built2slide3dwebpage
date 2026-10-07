@@ -1,36 +1,27 @@
-import React, {
-  Component,
-  Suspense,
-  lazy,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import SceneBoundary, { ModelLoading } from "../../scene/SceneBoundary.jsx";
 import Header from "../../scene/Header.jsx";
 import { clamp } from "../../animation/trajectory.js";
 const Scene = lazy(() => import("./Scene.jsx"));
 const CarInspection = lazy(() => import("../../scene/CarInspection.jsx"));
-class SceneBoundary extends Component {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    return this.state.failed ? (
-      <div className="scene-fallback">
-        <p>
-          3D is unavailable on this device.
-          <br />
-          Explore the photographic study below.
-        </p>
-      </div>
-    ) : (
-      this.props.children
-    );
-  }
-}
 export default function DriftLine() {
   const [inspecting, setInspecting] = useState(false);
+  const [ready, setReady] = useState(false),
+    [visible, setVisible] = useState(true),
+    [tabVisible, setTabVisible] = useState(!document.hidden);
+  const stage = useRef();
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) =>
+      setVisible(entry.isIntersecting),
+    );
+    observer.observe(stage.current);
+    const change = () => setTabVisible(!document.hidden);
+    document.addEventListener("visibilitychange", change);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", change);
+    };
+  }, []);
   const progress = useRef(0),
     pointer = useRef({ x: 0, y: 0 });
   const [pct, setPct] = useState(0),
@@ -60,7 +51,7 @@ export default function DriftLine() {
   return (
     <div className="drift-page">
       <Header />
-      <div className="cinematic-scroll">
+      <div className="cinematic-scroll" ref={stage}>
         <div
           className="cinematic"
           onPointerMove={(e) => {
@@ -73,25 +64,28 @@ export default function DriftLine() {
         >
           <div className="scene">
             <SceneBoundary>
-              <Suspense
-                fallback={<div className="loading">SETTING THE SCENE…</div>}
-              >
+              <Suspense fallback={<ModelLoading />}>
+                {!ready && <ModelLoading />}
                 <Scene
                   progress={progress}
                   pointer={pointer}
                   quality={quality}
-                  paused={paused || reduced}
+                  paused={paused}
+                  reduced={reduced}
+                  active={visible && tabVisible && !inspecting}
+                  onReady={() => setReady(true)}
                 />
               </Suspense>
             </SceneBoundary>
           </div>
           <div className="scene-grain" />
-          <div className="hero-copy" style={{ opacity: 1 - pct / 145 }}>
+          <div
+            className="hero-copy"
+            style={{ opacity: reduced ? 1 : Math.max(0, 1 - pct / 42) }}
+          >
             <p className="eyebrow">CONCEPT 01 / THE DRIFT LINE</p>
             <h1>
-              NEVER
-              <br />
-              STRAIGHT.
+              Life is too boring<br />to drive in a<br />straight line.
             </h1>
             <p className="hero-description">
               A little less grip.
@@ -184,7 +178,10 @@ export default function DriftLine() {
       </section>
       {inspecting && (
         <Suspense fallback={<div className="loading">LOADING BRUH…</div>}>
-          <CarInspection onClose={() => setInspecting(false)} />
+          <CarInspection
+            quality={quality}
+            onClose={() => setInspecting(false)}
+          />
         </Suspense>
       )}
     </div>

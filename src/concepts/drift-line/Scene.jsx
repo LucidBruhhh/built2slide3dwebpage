@@ -1,6 +1,12 @@
+import CedarPreview from "./CedarPreview.jsx";
 import React, { useMemo, useRef, useState, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import {
+  driftAngle,
+  driftStrength,
+  shot,
+} from "../../animation/choreography.js";
 import Car from "../../scene/Car.jsx";
 import { vehicleConfig as vehicle } from "../../scene/vehicleConfig.js";
 import { trajectory, heading, clamp } from "../../animation/trajectory.js";
@@ -34,7 +40,7 @@ function makeLine(offset = 0, width = 0.08) {
   for (let i = 0; i <= 180; i++) {
     const t = i / 180;
     const p = trajectory(t),
-      yaw = heading(t) + 0.68;
+      yaw = heading(t) + driftAngle(t);
     const rear = [
       p[0] - Math.sin(yaw) * vehicle.rearAxleDistance + Math.cos(yaw) * offset,
       0.025,
@@ -99,7 +105,7 @@ function Guide() {
     </mesh>
   );
 }
-function Smoke({ current, low, paused }) {
+function Smoke({ current, low, paused, strength }) {
   const group = useRef(),
     time = useRef(0);
   const count = low ? 26 : 58;
@@ -117,7 +123,7 @@ function Smoke({ current, low, paused }) {
       const age = (i / count + time.current * 0.12) % 1;
       const t = Math.max(0, current.current - age * 0.14);
       const p = trajectory(t),
-        yaw = heading(t) + 0.68,
+        yaw = heading(t) + driftAngle(t),
         side = i % 2 ? 1 : -1;
       mesh.position.set(
         p[0] -
@@ -134,7 +140,7 @@ function Smoke({ current, low, paused }) {
       mesh.rotateZ(i * 1.1 + age * 0.45);
       mesh.scale.setScalar(0.6 + age * 3.1);
       mesh.material.uniforms.opacity.value =
-        Math.pow(Math.sin(age * Math.PI), 0.65) * 0.28;
+        Math.pow(Math.sin(age * Math.PI), 0.65) * 0.32 * strength.current;
     });
   });
   return (
@@ -154,40 +160,63 @@ function Smoke({ current, low, paused }) {
     </group>
   );
 }
-function World({ progress, pointer, low, paused }) {
+function World({ progress, pointer, low, paused, reduced, onReady }) {
+  const preview = new URLSearchParams(location.search).get("environment") === "cedar-preview";
   const car = useRef(),
-    current = useRef(0);
+    current = useRef(0),
+    strength = useRef(0),
+    motion = useRef({ progress: 0, slip: 0 });
   const tex = useMemo(asphaltTexture, []);
   const target = useMemo(() => new THREE.Vector3(), []);
   const desired = useMemo(() => new THREE.Vector3(), []);
   useFrame((state, dt) => {
-    current.current = THREE.MathUtils.damp(
-      current.current,
-      progress.current,
-      5,
-      Math.min(dt, 0.05),
-    );
+    const previous = current.current;
+    current.current = reduced
+      ? 0
+      : THREE.MathUtils.damp(
+          current.current,
+          progress.current,
+          5,
+          Math.min(dt, 0.05),
+        );
     const t = current.current,
       p = trajectory(t),
       wide = state.size.width > 700;
     car.current.position.set(...p);
-    car.current.rotation.y =
-      heading(t) + 0.68 + (paused ? 0 : pointer.current.x * 0.055);
-    const px = paused ? 0 : pointer.current.x,
-      py = paused ? 0 : pointer.current.y;
+    const yaw = heading(t) + driftAngle(t),
+      frame = shot(t);
+    car.current.rotation.set(0, yaw, 0);
+    motion.current = { progress: t, slip: reduced ? 0 : driftAngle(t) };
+    strength.current = reduced
+      ? 0
+      : THREE.MathUtils.damp(
+          strength.current,
+          Math.min(1, (Math.abs(t - previous) / Math.max(dt, 0.001)) * 24) *
+            driftStrength(t),
+          3,
+          dt,
+        );
+    const px = reduced ? 0 : pointer.current.x,
+      py = reduced ? 0 : pointer.current.y;
+    const distance = wide ? frame.distance : 10.5;
     desired.set(
-      p[0] + (wide ? 8 : 10) + px * 0.5,
-      wide ? 6.5 : 8.5,
-      p[2] + (wide ? 10 : 12) + py * 0.3,
+      p[0] + Math.sin(yaw + frame.azimuth) * distance + px * 0.15,
+      wide ? frame.height : 5.7,
+      p[2] + Math.cos(yaw + frame.azimuth) * distance + py * 0.1,
     );
-    state.camera.position.lerp(desired, 1 - Math.exp(-dt * 3));
-    target.set(p[0] - (wide ? 2.8 : 0), wide ? 0.2 : 2.2, p[2]);
+    if (reduced) state.camera.position.copy(desired);
+    else state.camera.position.lerp(desired, 1 - Math.exp(-dt * 4));
+    target.set(
+      p[0] - (wide ? 2.2 * (1 - Math.min(1, t * 3)) : 0),
+      wide ? 0.7 : 2.05,
+      p[2],
+    );
     state.camera.lookAt(target);
   });
   return (
     <>
-      <color attach="background" args={["#181b19"]} />
-      <fog attach="fog" args={["#181b19", 17, 48]} />
+      <color attach="background" args={[preview ? "#71888d" : "#181b19"]} />
+      <fog attach="fog" args={[preview ? "#71888d" : "#181b19", preview ? 25 : 17, preview ? 85 : 48]} />
       <hemisphereLight args={["#b9c3c8", "#302c21", 1.6]} />
       <directionalLight
         position={[5, 12, 4]}
@@ -207,10 +236,10 @@ function World({ progress, pointer, low, paused }) {
         <planeGeometry args={[180, 180]} />
         <meshStandardMaterial map={tex} roughness={0.96} metalness={0.04} />
       </mesh>
-      <Guide />
+      {preview ? <CedarPreview /> : <Guide />}
       <Tracks current={current} />
       <group ref={car}>
-        <Car />
+        <Car onReady={onReady} motion={motion} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
           <planeGeometry args={[2.6, 5.2]} />
           <shaderMaterial
@@ -221,8 +250,13 @@ function World({ progress, pointer, low, paused }) {
           />
         </mesh>
       </group>
-      <Smoke current={current} low={low} paused={paused} />
-      {[-12, -6, 0, 6, 12].map((x) => (
+      <Smoke
+        current={current}
+        low={low}
+        paused={paused || reduced}
+        strength={strength}
+      />
+      {!preview && [-12, -6, 0, 6, 12].map((x) => (
         <mesh
           key={x}
           position={[x, 0.015, -10]}
@@ -243,6 +277,7 @@ export default function Scene(props) {
       (innerWidth < 700 || navigator.hardwareConcurrency <= 4 || slow));
   return (
     <Canvas
+      frameloop={!props.active ? "never" : props.reduced ? "demand" : "always"}
       shadows={!low}
       dpr={low ? 1 : [1, 1.5]}
       camera={{ position: [8, 7, 12], fov: 43, near: 0.1, far: 90 }}

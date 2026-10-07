@@ -7,5 +7,5 @@ export const vehicleConfig = {
   yaw: -Math.PI / 2,
   contactHeight: 0.006925,
   rearAxleDistance: 1.342,
-  halfTrack: 0.91,
+  halfTrack: 0.835,
 };

@@ -29,7 +29,7 @@ Scroll or swipe vertically to progress the drift. Pointer movement subtly change
 
 `src/concepts/drift-line/` owns the experiment. `src/scene/` contains shared header, photo-reference R33 model and orbit viewer. `src/animation/trajectory.js` defines the curve shared by the car and tyre marks. `src/shaders/` contains the bounded smoke shader. New concepts should have independent directories and lazy route imports.
 
-`public/assets/` has separate folders for brand, photographs, models, textures, stickers, merchandise and events. See its asset manifest. The active car is the user-supplied BRUH GLB, loaded with GLTFLoader and normalised to 4.55 units long with its nose along +Z. The loader corrects the slight nose-up pitch and centres the wheelbase. Its embedded texture, plates and decals are preserved. The source has a single combined mesh, so the wheels cannot currently steer or spin independently. Asphalt and smoke are procedural.
+`public/assets/` has separate folders for brand, photographs, models, textures, stickers, merchandise and events. See its asset manifest. The active car is the user-supplied BRUH GLB, loaded with GLTFLoader and normalised to 4.55 units long with its nose along +Z. The loader corrects the slight nose-up pitch and centres the wheelbase. Its embedded texture, plates and decals are preserved. The source has one combined mesh; the review version replaces wheel centres with separate procedural wheels for steering/spin. Fitment is estimated and source flare artifacts remain. Asphalt and smoke are procedural.
 
 The original attached photos remain unmodified. Five selected photos and the logo are copied locally for this first pass. The remaining attachments are reference material, not automatically loaded into the experience. Barlow and Barlow Condensed are bundled locally using Fontsource, with no external font requests.
 
@@ -50,3 +50,6 @@ The untouched upload is saved at `source-assets/bruh-original.glb` (25,742,824 b
 ## Replacement model selected after comparison
 
 The active model is now `public/assets/models/bruh-v2.glb` from `source-assets/candidate-a.glb`. See [MODEL-COMPARISON.md](MODEL-COMPARISON.md) for the independent audit, source hashes, optimisation measurements and remaining limitations. `node scripts/prepare-bruh.mjs` defaults to this replacement; the old preparation statistics above describe the first upload. Model orientation/contact calibration and shared tyre-effect anchors live in `src/scene/vehicleConfig.js`.
+
+## Review checkpoint
+See [review/AUDIT.md](review/AUDIT.md) for test coverage, outstanding fidelity issues, and the background proposal. This checkpoint is a working review version, not a certified 1:1 replica. The cedar background is disabled by default.
